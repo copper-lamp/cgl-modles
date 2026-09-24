@@ -131,7 +131,11 @@ pub struct LauncherRange {
 }
 
 /// 后端声明。
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+///
+/// 序列化/反序列化由 [`backend_serde`] 子模块手写实现（字段名 `crate` 是 Rust 关键字，
+/// 无法用 `rename` 直接处理），故这里**不** derive `Serialize`/`Deserialize`，
+/// 否则会与手写实现冲突（E0119）。
+#[derive(Debug, Clone, PartialEq)]
 pub struct BackendSpec {
     /// Rust crate 名，须与 `src-tauri/Cargo.toml` 的 `name` 一致。
     pub crate_name: String,

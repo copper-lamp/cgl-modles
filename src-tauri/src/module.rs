@@ -290,6 +290,10 @@ impl Module for DemoModule {
         // 不保证「退订时没有正在执行的回调」）。本模板不引入任何 unsafe。
         let buffer = self.activity.clone();
         let bus = kernel.events().clone();
+        // 闭包是 `move`，会把 `bus` 整个移入；而 `subscribe` 通过 `&self` 借用 `bus`，
+        // 直接捕获 `bus` 会在借用期间 move out（E0505）。这里为闭包单独持一份 clone：
+        // 发布侧用同一事件总线即可，不需要（也不应）与订阅借用同一个 Arc 手柄。
+        let publish_bus = bus.clone();
 
         // 订阅发布侧事件名（带点号）。至少一次语义：订阅时事件总线会立即补发
         // 重放缓冲内匹配的历史事件，因此回调可能在 `start` 返回前就被调用；
@@ -299,7 +303,7 @@ impl Module for DemoModule {
             // 模块自有事件：前端只订阅模块域事件即可，无需关心模块内部订阅了哪些内核事件。
             // 序列化失败不应吃掉整条记录（缓冲里已经存下了），故只记录警告。
             match serde_json::to_value(&record) {
-                Ok(value) => bus.publish(ACTIVITY_EVENT, value),
+                Ok(value) => publish_bus.publish(ACTIVITY_EVENT, value),
                 Err(e) => log::warn!("[demo-tools] 模块事件负载序列化失败，已仅保留内存记录: {e}"),
             }
         });
@@ -407,6 +411,12 @@ pub fn activity_snapshot() -> Vec<ActivityRecord> {
 mod tests {
     use super::*;
     use serde_json::json;
+    use std::sync::Mutex;
+
+    /// 全局单槽 `ACTIVITY_SINK` 是进程级共享状态：`DemoModule::new()` 会覆盖槽点，
+    /// 并行测试下 `activity_snapshot` 可能读到**其它测试实例**的缓冲（断言的条数串扰）。
+    /// 这把锁让所有会创建 `DemoModule` 的测试串行执行，确保读取拥有确定性。
+    static SINK_SERIAL: Mutex<()> = Mutex::new(());
 
     #[test]
     fn manifest_is_embedded_and_valid() {
@@ -429,6 +439,7 @@ mod tests {
 
     #[test]
     fn activity_buffer_is_capped_and_keeps_latest() {
+        let _guard = SINK_SERIAL.lock().unwrap();
         let module = DemoModule::new();
         for i in 0..(ACTIVITY_CAPACITY + 8) {
             push_activity(&module.activity, "download.status", &json!({ "seq": i }));
@@ -445,6 +456,7 @@ mod tests {
 
     #[test]
     fn activity_snapshot_observes_instance_buffer() {
+        let _guard = SINK_SERIAL.lock().unwrap();
         // 命令层经快照读取同一份数据（不依赖全局单例持有所有权）。
         let module = DemoModule::new();
         push_activity(&module.activity, "download.status", &json!({ "task": 1 }));
@@ -456,6 +468,7 @@ mod tests {
 
     #[test]
     fn clear_activity_empties_buffer() {
+        let _guard = SINK_SERIAL.lock().unwrap();
         let module = DemoModule::new();
         push_activity(&module.activity, "download.status", &json!({}));
         assert_eq!(module.recent_activity().len(), 1);
@@ -465,6 +478,7 @@ mod tests {
 
     #[test]
     fn live_instance_counter_tracks_construction_and_drop() {
+        let _guard = SINK_SERIAL.lock().unwrap();
         // 计数由守卫随实例生死增减，用于调试入口判断模块是否活跃。
         let before = ACTIVE_INSTANCES.load(Ordering::SeqCst);
         {

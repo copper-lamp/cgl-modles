@@ -129,25 +129,32 @@ impl DemoCommand {
     pub fn parse(name: &str, args: Value) -> Result<DemoCommand, KernelError> {
         // 前端可能传 null 或省略参数：统一归一化为空对象，避免各分支重复处理。
         let args = if args.is_null() { json!({}) } else { args };
-        let parse = |args: Value| -> Result<_, KernelError> {
-            serde_json::from_value(args).map_err(|e| {
-                KernelError::InvalidArgument(format!("命令 `{name}` 参数不合法: {e}"))
-            })
-        };
         match name {
             CMD_OVERVIEW => Ok(DemoCommand::Overview),
-            CMD_NOTES_LIST => Ok(DemoCommand::NotesList(parse(args)?)),
-            CMD_NOTE_UPSERT => Ok(DemoCommand::NoteUpsert(parse(args)?)),
-            CMD_NOTE_DELETE => Ok(DemoCommand::NoteDelete(parse(args)?)),
-            CMD_PING => Ok(DemoCommand::Ping(parse(args)?)),
-            CMD_EXPOSE_VERSION => Ok(DemoCommand::ExposeVersion(parse(args)?)),
-            CMD_ACTIVITY_RECENT => Ok(DemoCommand::ActivityRecent(parse(args)?)),
+            CMD_NOTES_LIST => Ok(DemoCommand::NotesList(parse_args::<NotesListArgs>(name, args)?)),
+            CMD_NOTE_UPSERT => Ok(DemoCommand::NoteUpsert(parse_args::<NoteUpsertArgs>(name, args)?)),
+            CMD_NOTE_DELETE => Ok(DemoCommand::NoteDelete(parse_args::<NoteDeleteArgs>(name, args)?)),
+            CMD_PING => Ok(DemoCommand::Ping(parse_args::<IntentArgs>(name, args)?)),
+            CMD_EXPOSE_VERSION => Ok(DemoCommand::ExposeVersion(parse_args::<IntentArgs>(name, args)?)),
+            CMD_ACTIVITY_RECENT => {
+                Ok(DemoCommand::ActivityRecent(parse_args::<ActivityArgs>(name, args)?))
+            }
             other => Err(KernelError::InvalidArgument(format!(
                 "未知模块命令 `{other}`；本模块支持: {}",
                 ALL_COMMANDS.join(" / ")
             ))),
         }
     }
+}
+
+/// 依目标类型解析 JSON 参数。
+///
+/// 独立成**泛型函数**而非闭包：闭包无法带泛型参数，其返回类型 `Result<_, KernelError>`
+/// 只能锚定到第一个调用点，后续分支复用同一闭包就会报 `?` 类型不兼容（E0308）。
+fn parse_args<T: serde::de::DeserializeOwned>(name: &str, args: Value) -> Result<T, KernelError> {
+    serde_json::from_value(args).map_err(|e| {
+        KernelError::InvalidArgument(format!("命令 `{name}` 参数不合法: {e}"))
+    })
 }
 
 /// 分发命令：参数校验 + 调 service，返回可直接序列化给前端的 JSON。
