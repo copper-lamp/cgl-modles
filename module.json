@@ -19,7 +19,7 @@
   "backend": {
     "crate": "copper-module-demo",
     "entry": "copper_module_demo::DemoModule",
-    "artifact_glob": "target/release/copper_module_demo.dll"
+    "artifact_glob": "src-tauri/target/release/copper_module_demo.dll"
   },
   "frontend": { "dist": "frontend/dist", "register": "register.js" },
   "permissions": ["intents:request"],
