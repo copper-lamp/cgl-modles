@@ -22,7 +22,7 @@
     "artifact_glob": "target/release/copper_module_demo.dll"
   },
   "frontend": { "dist": "frontend/dist", "register": "register.js" },
-  "permissions": [],
+  "permissions": ["intents:request"],
   "events": { "subscribe": ["download.status"], "publish": ["demo-tools.activity"] },
   "intents": ["demo-tools.ping"],
   "icon": "assets/icon.svg",
