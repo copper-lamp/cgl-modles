@@ -1,4 +1,4 @@
-# 示例工具 · cgl-models 模块模板
+# cgl-models 模块模板
 
 > 铜傀儡附加模块模板：clone 即可得到可校验、可打包、可提审的模块骨架。**后端接入内核编译当前受内核侧阻塞，见「适配平台与内核版本要求」。**
 
@@ -6,9 +6,9 @@
 ![最新版本](https://img.shields.io/badge/version-0.1.0-4c8bf5?style=flat-square)
 ![许可](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
-本仓库是铜傀儡（CopperGolem）的**第三方附加模块模板仓库**。模块 `copper-lamp.demo-tools`（i18n 命名空间 `demo-tools`）是模板自带的示例，演示命令、事件、意图、数据库与语言包的最小闭环；模块作者 fork 本仓库后替换其中的示例内容即可开始开发。
+本仓库是铜傀儡（CopperGolem）的**第三方附加模块模板仓库**。模块 `copper-lamp.demo-tools`（i18n 命名空间 `demo-tools`）是模板自带的示例，演示命令、事件、意图、数据库与语言包的最小闭环； fork 本仓库后替换其中的示例内容即可开始开发。
 
-> 本仓库是**附加模块**仓库，不是内核仓库。内核契约以 `CopperCore` 源码为准，模块侧不得臆造内核接口。
+> 本仓库是**附加模块**仓库，不是内核仓库。
 
 ## 功能列表
 
@@ -159,7 +159,6 @@ npm run submit
 - [开发指南](docs/开发指南.md)：环境、跑起来、改哪几个文件、契约速查、联动范例、调试排查、打包、提审、版本与 CHANGELOG。
 - [模块契约](docs/模块契约.md)：内核硬契约摘录，逐条标注出处文件路径。
 - [发布流程](docs/发布流程.md)：版本号规则、tag、Release、提审 bot、幂等与回滚。
-- [设计](docs/设计.md)：本模板仓库自身的需求 / 架构 / 备注，含现状差距与待办清单。
 
 ## 许可与第三方组件
 
