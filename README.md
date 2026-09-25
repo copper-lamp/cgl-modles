@@ -8,7 +8,6 @@
 
 本仓库是铜傀儡（CopperGolem）的**第三方附加模块模板仓库**。模块 `copper-lamp.demo-tools`（i18n 命名空间 `demo-tools`）是模板自带的示例，演示命令、事件、意图、数据库与语言包的最小闭环； fork 本仓库后替换其中的示例内容即可开始开发。
 
-> 本仓库是**附加模块**仓库，不是内核仓库。
 
 ## 功能列表
 
@@ -35,20 +34,6 @@
 
 平台枚举是**权威枚举**，与 `cgl-libs` 逐字一致：`windows-x86_64` / `windows-aarch64` / `android-arm64` / `linux-x86_64`。`platforms` 是承诺而非描述——声明了但缺该平台产物的模块，提审直接失败。
 
-**当前阶段的运行前提**：铜内核当前只支持**静态编译的内置模块**（`ModuleRegistry` 没有从磁盘装载模块的代码路径）。因此本模块目前只能以**源码依赖**形态接入——`src-tauri/` 作为 path/git 依赖接入内核，前端包被内核 `frontend/src/modules/index.ts` 静态引入，二者随内核一起编译。
-
-**该接入方式当前还接不上，受两处阻塞**（均为内核侧 / 环境侧问题，非本模块代码问题）：
-
-| 编号 | 阻塞 | 具体表现 |
-|---|---|---|
-| G14 | 内核 crate 未开放模块可见性 | `CopperCore/src-tauri/src/lib.rs` 的 `mod commands; mod error; mod modules; mod registry; mod services; mod state;` **全部私有、无 `pub mod` / `pub use`**。本模块 `src-tauri/` 以 path 依赖引入后**无法命名** `KernelContext` / `Module` / `KernelError`，**编译不过**。修复需内核侧改为 `pub mod` |
-| G15 | 内核依赖链需要 OpenSSL | 内核 `Cargo.toml` 直接依赖 `openssl = "0.10"`（在四个源文件中实际使用），缺 OpenSSL 开发环境的机器无法完成链接 |
-
-**已实测通过的部分**（前端链路与工具链）：`npm run schema:check`（schema + 语义 + 语言包键集）、`npm test`（17/17）、`npm run build:frontend`（`vue-tsc` 0 错误 + `vite build`）、`npm run dev`、`npm run package`（真实产出 `.cglm` + `.sha256`，经解压工具逐文件校验一致）、`npm run submit`（dry-run）。
-
-**未实测通过的部分**：后端编译与 `cargo test`，受阻于上述 G14 与 G15。
-
-面向终端用户的「模块列表一键安装」所依赖的动态加载能力**尚未实现**，属内核侧阶段二工作。本模板的发布包结构已按阶段二的最终形态定义，届时无需改契约。详见 [docs/设计.md](docs/设计.md) 2.4。
 
 ## 安装方式
 
